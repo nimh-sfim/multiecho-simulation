@@ -13,7 +13,8 @@ def monoexponential(
 ) -> npt.NDArray:
     """Specify a monoexponential model for MRI signal calculations.
 
-    (Based on from https://github.com/ME-ICA/tedana/blob/main/tedana/decay.py, but flipped for R2*)
+    (Based on from https://github.com/ME-ICA/tedana/blob/main/tedana/decay.py,
+    but flipped to inputting R2* instead of T2*)
 
     Parameters
     ----------
@@ -21,13 +22,13 @@ def monoexponential(
         Echo times
     s0 : :obj:`list` :obj:`npt.NDArray`
         S0 parameter
-    r2star ::obj:`list` :obj:`npt.NDArray`
+    r2star : :obj:`list` :obj:`npt.NDArray`
         R2* parameter
 
     Returns
     -------
     S : obj:`float`
-        Calculated signal based on S = s0 * np.exp(-tes * r2star)
+        Calculate signal based on S = s0 * np.exp(-tes * r2star)
 
     Notes
     -----
@@ -110,7 +111,8 @@ def calc_delta_r2s_s0_given_s_pchange_proportion(
     s = (1 + (inputted_s / 100)) * baseline_value
 
     # Calculate delta_s0 so that the decay curve results in S if changing signal is purely S0 (i.e. delta_r2s==0)
-    delta_s0_scale = np.exp((te * r2s_baseline) + np.log(s)) - s0_baseline
+    # delta_s0_scale = np.exp((te * r2s_baseline) + np.log(s)) - s0_baseline
+    delta_s0_scale = s * np.exp((te * r2s_baseline)) - s0_baseline
 
     if proportion_s0_r2s < 1:
         delta_r2s_scale = (
@@ -118,6 +120,15 @@ def calc_delta_r2s_s0_given_s_pchange_proportion(
             - te * r2s_baseline
             - np.log(s)
         ) / ((1 - proportion_s0_r2s) * te)
+
+
+        delta_r2s_scale = (
+            (
+                (1 - proportion_s0_r2s) * np.log()
+            )
+
+        )
+
     else:
         delta_r2s_scale = np.zeros((inputted_s.shape))
 
