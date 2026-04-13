@@ -1,13 +1,13 @@
 """ Generate time series with different characteristics to use as input to generate_sims at different echoes"""
 
-from typing import List
+from typing import List, Union
 
 import numpy as np
 import numpy.typing as npt
 from scipy import signal
 
 
-def gen_randfreq_timeseries(n_reps: int, n_timepoints: int, n_freq: int) -> npt.NDArray:
+def gen_randfreq_timeseries(n_reps: int, n_timepoints: int, n_freq: int,seed: Union[int, None] = None) -> npt.NDArray:
     """
     time series that is a combination of sine waves with uniform random freq & phase and amplitude
 
@@ -31,31 +31,32 @@ def gen_randfreq_timeseries(n_reps: int, n_timepoints: int, n_freq: int) -> npt.
     This function is used as one of several options for generating simulated time series and should be fairly similar to bandpass filtering random noise (another option)
     """
 
+    if seed:
+        np.random.seed(seed)
+
     freq_random = np.zeros((n_reps, n_timepoints))
-    time_scale = np.matlib.repmat(
-        np.linspace(0, 2 * np.pi, num=n_timepoints), n_reps, 1
+    time_scale = np.tile(
+        np.linspace(0, 2 * np.pi, num=n_timepoints), (n_reps, 1)
     )  # one cycle of a sin wave with freq=1
     min_freq = 1
     max_freq = 5 / n_timepoints  # a cycle repeating every 5 time points
     for freq_idx in range(n_freq):
-        random_amp = np.matlib.repmat(
-            0.1 + np.random.rand(n_reps) / 0.9, n_timepoints, 1
+        random_amp = np.tile(np.random.rand(n_reps), (n_timepoints, 1)).T
+        random_freq = np.tile(
+            min_freq + np.random.rand(n_reps) / max_freq, (n_timepoints, 1)
         ).T
-        random_freq = np.matlib.repmat(
-            min_freq + np.random.rand(n_reps) / max_freq, n_timepoints, 1
-        ).T
-        random_phase = np.matlib.repmat(
-            2 * np.pi * np.random.rand(n_reps), n_timepoints, 1
+        random_phase = np.tile(
+            2 * np.pi * np.random.rand(n_reps), (n_timepoints, 1)
         ).T
         freq_random = freq_random + random_amp * np.sin(
             random_freq * time_scale + random_phase
         )
-    tmp_mean = np.matlib.repmat(np.mean(freq_random, axis=1), n_timepoints, 1).T
-    tmp_std = np.matlib.repmat(np.std(freq_random, axis=1), n_timepoints, 1).T
+    tmp_mean = np.tile(np.mean(freq_random, axis=1), (n_timepoints, 1)).T
+    tmp_std = np.tile(np.std(freq_random, axis=1), (n_timepoints, 1)).T
     return (freq_random - tmp_mean) / tmp_std
 
 
-def gen_randn_timeseries(n_reps: int, n_vals: int) -> npt.NDArray:
+def gen_randn_timeseries(n_reps: int, n_vals: int, seed: Union[int, None] = None) -> npt.NDArray:
     """
     time series that are Gaussian random noise
 
@@ -68,6 +69,8 @@ def gen_randn_timeseries(n_reps: int, n_vals: int) -> npt.NDArray:
     -------
     A 2D matrix n_reps time series of n_timepoints durations of Gaussian random noise
     """
+    if seed:
+        np.random.seed(seed)
     return np.random.randn(n_reps, n_vals)
 
 
@@ -76,6 +79,7 @@ def gen_bandpass_randn_timeseries(
     n_timepoints: int,
     passband: List[float] = [1 / 100, 1 / 20],
     fs: float = 0.5,
+    seed: Union[int, None] = None
 ) -> npt.NDArray:
     """
     time series that are Gaussian random noise and then bandpass filtered
@@ -94,4 +98,4 @@ def gen_bandpass_randn_timeseries(
     """
 
     sos = signal.butter(10, passband, "bandpass", fs=fs, output="sos")
-    return signal.sosfilt(sos, gen_randn_timeseries(n_reps, n_timepoints), axis=1)
+    return signal.sosfilt(sos, gen_randn_timeseries(n_reps, n_timepoints, seed=seed), axis=1)

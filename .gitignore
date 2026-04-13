@@ -1,3 +1,6 @@
+# Output directory for files saved during tests
+.testing_cache/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -18,98 +18,115 @@ This also includes some functions to help generate the intial time series.
 
 ## Underlying math for the simulation
 
-$S = (\overline{S_0} + \Delta S_0) * e^{-TE * (\overline{R_2^*} + \Delta R_2^*)}$  
-$X = (\overline{S_0} + \Delta S_0)$  
-$Y = e^{-TE * (\overline{R_2^*} + \Delta R_2^*)}$  
-$S = X*Y$  
-$var(S) = var(XY)$   
-$E[X] = mean(X)=\overline{S_0}$  
-$E[Y] = mean(Y) = e^{-TE * \overline{R_2^*}}$   
-$var(X) = E[(\Delta S_0)^2]$  
-$var(Y) = E[(e^{-TE * (\overline{R_2^*} + \Delta R_2^*)} - e^{-TE * (\Delta R_2^*)})^2]=E[(e^{-TE * (\Delta R_2^*)}*(e^{-TE * \overline{R_2^*}}-1))^2]$  
-Using identitiy  
-$var(XY) = (E[X])^2*var(Y) + (E[Y])^2*var(X) + var(X)*var(Y)$
+$S(v,t,TE) = (\overline{S_0(v,TE)} + \Delta S_0(v,t,TE)) * e^{-TE * (\overline{R_2^*(v,TE)} + \Delta R_2^*(v,t,TE))}$
 
+For everything below, we will get different values for each voxel (v),
+but removing the v to make the equation slightly cleaner
 
-$prop(\frac{\Delta S_0 }{ \Delta R_2^*})$ = $p_{S_0}$ Proportion of $\Delta S_0$ to $\Delta R_2^*$.  
-1 = pure $\Delta S_0$ and 0= pure $\Delta R_2^*$
+$S(t,TE) = (\overline{S_0(TE)} + \Delta S_0(t,TE)) * e^{-TE * (\overline{R_2^*(TE)} + \Delta R_2^*(t,TE))}$
 
-By the initial specificiation of the goal:  
-$C = constant$  
-$p_{S_0}*var(X) + (1-p_{S_0})*var(Y) = C$
-The above cannot be correct because $p_{S_0}*var(X)*(1-p_{S_0})*var(Y)$ would inherantly be constant and $(E[X])^2*p_{S_0}*var(Y) + (E[Y])^2*(1-p_{S_0})*var(X)$ could not also be a constant.
+The overall goal is for user specified values for $S(t,TE)$, $\overline{S_0(TE)}$, $\overline{R_2^*(TE)}$,
+for a reference $TE$, create time series that are
+a roughly linear proportion of contributions from $\Delta S_0(t,TE)$ and $\Delta R_2^*(t,TE)$.
+That is, for the reference TE, regardless of the proportion, $S(t,TE)$ is exactly the prespecified value,
+but at other echo times, a new $S(t,TE)$ can be calculated using the same
+$\overline{S_0(TE)}$, $\overline{R_2^*(TE)}$, $\Delta S_0(t,TE)$, and $\Delta R_2^*(t,TE)$
 
+The reason this is useful is that a user could then specify exactly what their data look
+like at a specific echo time, even by providing real data,
+and then model or simulate what the time series would be at other echo times
+depending on the relative contributions of $\Delta S_0(t,TE)$ and $\Delta R_2^*(t,TE)$.
+If done correctly, we should be able to estimate the $\Delta S_0(t,TE)$ and $\Delta R_2^*(t,TE)$ from simulated data (using kappa and rho or other metrics) while also knowing the
+true values.
 
-I think we'd need to solve for
-$\frac{p_{S_0}*var(X)}{(E[Y])^2} + \frac{(1-p_{S_0})*var(Y)}{(E[X])^2}=C$  
-The $var(X)*var(Y)$ term would still be constant, but this would then be solvable. (need to think more if this is breaking the specification I'm tying to solve for)
+$S(t,TE) = (\overline{S_0(TE)} + \Delta S_0(t,TE)) * e^{-TE * (\overline{R_2^*(TE)} + \Delta R_2^*(t,TE))}$
 
-Identity if the above is a constant  
-$p*A + (1-p)*B = (1-p)*A + pB$  
-$p*A +B -pB = A - pA +pB$  
-$2p*A-A = 2p*B-B$  
-$A*(2p-1) = B*(2p-1)$  
-Cancelling out p and claiming unequal things are equal so I'm doing something wrong.
- 
-That is, the variance explained by X and Y
-$(1-p_{S_0})*(E[X])^2*var(Y) + p_{S_0}*(E[Y])^2*var(X) = C$
+$S(t,TE) = \overline{S_0(TE)}*(1+\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}) * e^{-TE * \overline{R_2^*(TE)}}*e^{-TE * \Delta R_2^*(t,TE)}$
 
+$\overline{S(TE)} = \overline{S_0(TE)} * e^{-TE * \overline{R_2^*(TE)}}$
 
-older stuff
+$S(t,TE) = \overline{S(TE)}*(1+\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}) * e^{-TE * \Delta R_2^*(t,TE)}$
 
-$prop(\frac{\Delta S_0 }{ \Delta R_2^*})$ = $p_{S_0}$ Proportion of $\Delta S_0$ to $\Delta R_2^*$.  
-1 = pure $\Delta S_0$ and 0= pure $\Delta R_2^*$
+Percent change from the mean
 
-$TE = echo\space  time$
+$\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}} = (1+\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}) * e^{-TE * \Delta R_2^*(t,TE)} - 1$
 
-$S = (S_0 + p_{S_0} * \Delta S_0) * e^{-TE * (R_2^* + (1 - p_{S_0}) * \Delta R_2^*)}$
+$\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}} = (1+\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}) * e^{-TE * \Delta R_2^*(t,TE)} -1$
 
-If $S$, a baseline $S_0$, a baseline $R_2^*$, a baseline $TE$ and $p_{S_0}$ are provided, there should be stable solutions for $\Delta R_2^*$ and $\Delta S_0$.
-Thus, new $S$ time series can be calculated using those $\Delta R_2^*$ and $\Delta S_0$ values and a different $TE$
+First order Taylor Explansion:
+$e^{-TE * \Delta R_2^*(t,TE)} \approx 1 - TE * \Delta R_2^*(t,TE)$
 
-$ln(S_0 + p_{S_0} * \Delta S_0) - ln(S)  = TE * R_2^* + TE * ((1 - p_{S_0}) * \Delta R_2^*)$
+$\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}}\approx (1+\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}) * (1 - TE * \Delta R_2^*(t,TE)) - 1$
 
-$(1 - p_{S_0}) * \Delta R_2^* = \frac{ln(S_0 + p_{S_0} * \Delta S_0) - ln(S)}{TE} - R_2^*$
+$\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}} \approx \frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}-TE * \Delta R_2^*(t,TE) - \frac{TE * \Delta R_2^*(t,TE) * \Delta S_0(t,TE)}{\overline{S_0(TE)}}$
 
-Since only want to solve for $0 \leq p_{S_0} \leq1$ first constraining the above equation by setting $p_{S_0}=1$
+Common assumption. This is small enough that it can be dropped: $\frac{TE * \Delta R_2^*(t,TE) * \Delta S_0(t,TE)}{\overline{S_0(TE)}}$
 
-$0 = \frac{ln(S_0 + \Delta S_0) - ln(S)}{TE} - R_2^*$
+This is not a great assumption.
+If mean $\Delta R_2^*(t,TE)$ is 30 and the $\Delta {T_2^*}=-2$ then
+$TE * \Delta R_2^*(t,TE) = TE * (1/30-1/28) = - TE * 0.002$.
+For a third echo echo time of $TE=50ms$ that is -0.12.
+That is a scaling factor of 1.12 is added to the the reduced $\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}$ term.
 
-$TE * R_2^*  = ln(\frac{S_0 + \Delta S_0}{S})$
+$\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}} \approx 1.12*\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}-TE * \Delta R_2^*(t,TE)$
 
-$\frac{S_0 + \Delta S_0}{S} = e^{TE * R_2^*}$
+If $\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}=0.1$ (a 10% signal change) then, with the above assumption:
+$\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}} \approx 0.1 + 0.12 = 0.22$
+Without the above assumption,
+$\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}} \approx 1.12*0.1 + 0.12 = 0.232$
+That's about a 5% misapproximation of $\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}}$
 
-$\Delta S_0 = S*e^{TE * R_2^*} - S_0$
+Going forward this with approximation/assumption for now and will test overall error in the simulation results later.
 
-With a known $\Delta S_0$, the inputted $p_{S_0}$ can be used to solve for $R_2^*$ for $p_{S_0}\lt1$
+$\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}} \approx \frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}-TE * \Delta R_2^*(t,TE)$
 
-$(1 - p_{S_0}) * \Delta R_2^* = \frac{ln(S_0 + p_{S_0} * \Delta S_0) - ln(S)}{TE} - R_2^*$
+$\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}} = S_{spc}(t,TE) = signal\ percent\ change\ from\ mean$
 
-$\Delta R_2^* = \frac{\frac{ln(S_0 + p_{S_0} * \Delta S_0) - ln(S)}{TE} - R_2^*}{1 - p_{S_0}}$
+For scaling the proportion of each:
+Let p be the proportion of signal driven by $\Delta S_0(t,TE)$ changes
 
-Replacing ${\Delta S_0}$:  
-$ln(S_0 + p_{S_0} * \Delta S_0) - ln(S) =$
-$ln(S_0 + p_{S_0} * S*e^{TE * R_2^*} - S_0) - ln(S) =$
-$ln(p_{S_0} * S*e^{TE * R_2^*}) - ln(S) =$
-$ln(\frac{p_{S_0} * S*e^{TE * R_2^*}}{S}) =$
-$ln(p_{S_0} * e^{TE * R_2^*})= $
-$ln(p_{S_0}) +  TE * R_2^*$
+$S_{spc}(t,TE) \approx p*\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}-(1-p)*TE * \Delta R_2^*(t,TE)$
 
-$\Delta R_2^* = \frac{\frac{ln(p_{S_0}) +  TE * R_2^*}{TE} - R_2^*}{1 - p_{S_0}}= $
-$\frac{\frac{ln(p_{S_0})}{TE}}{1 - p_{S_0}}= $
-$\frac{(1 - p_{S_0})* ln(p_{S_0})}{TE}$
+(Note the approximation above means that the approximation error will be smallest for p=0 or 1 and largest somewhere where there is a mix)
 
+There are an infinite number of solutions to the above equation,
+but we want the one where the $\Delta S_0(t,TE)$ and $\Delta R_2^*(t,TE)$
+terms are both $\in[0, S_{spc}(t,TE)]$.
+If $S_{spc}(t,TE)\lt0$ then it's still between 0 and that value.
+With that constraint, the above has a fairly simple solution
 
-Working here & trying to resolve some issues:
+$$
+\Delta S_0(t,TE) \approx
+\begin{cases}
+0 & \text{if p=0} \\
+\frac{S_{spc}(t,TE) * \overline{S_0(TE)}}{p} & \text{if $p\in(0,1]$}
+\end{cases}
+$$
 
-    For proportion_s0_r2s==1:
-        0 = (np.log(s0_baseline + delta_s0_scale) - te*r2s_baseline - np.log(S)) / TE
-        np.log(s0_baseline + delta_s0_scale) = te*r2s_baseline + np.log(S)
-        delta_s0_scale = np.exp(te*r2s_baseline + np.log(S)) - s0_baseline
-        The above eq is used to calculate delta_s0_scale in the function
-    With a known delta_s0_scale, the above eq with proportion_s0_r2s can be used to solve for delta_r2s_scale
-        (1-proportion_s0_r2s)*delta_r2s_scale = (np.log(s0_baseline + proportion_s0_r2s*delta_s0_scale) - te*r2s_baseline- np.log(S)) / TE
-        delta_r2s_scale = (np.log(s0_baseline+proportion_s0_r2s*delta_s0_scale) - te*r2s_baseline - np.log(S))/((1-proportion_s0_r2s)*te)
-        The above eq is used to calculate delta_r2s_scale in the function, but it fails for 1-proportion_s0_r2s==0, but,
-        in that case (1-proportion_s0_r2s)*delta_r2s_scale should be 0 so it's just set to 0
-    The returned delta_s0 and delta_r2s values are the scaled values multiplied by their proportions
+$$
+\Delta R_2^*(t,TE) \approx
+\begin{cases}
+0 & \text{if p=1} \\
+-\frac{S_{spc}(t,TE)}{(1-p)*TE} & \text{if $p\in[0,1)$}
+\end{cases}
+$$
+
+For any given $S(t,TE)$, $\overline{S_0(TE)}$, $\overline{R_2^*(TE)}$, $TE$ & $p$ we can thus approximate $\Delta S_0(t,TE)$ and $\Delta R_2^*(t,TE)$.
+There are several levels of tests to see how far this approximation diverges from truth.
+
+Full decay curve: 
+$S_{spc} = \frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}} = (1+\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}) * e^{-TE * \Delta R_2^*(t,TE)} -1$
+
+Without any approximations, the above should be identical to the prespecified $S(t,TE)$ for the pre-specified $TE$.
+For other $TEs$ the above is our closest value to truth can can be compared to the other levels of approximation.
+
+First order Taylor approximation:
+$S_{spc} \approx \frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}-TE * \Delta R_2^*(t,TE) - \frac{TE * \Delta R_2^*(t,TE) * \Delta S_0(t,TE)}{\overline{S_0(TE)}}$
+
+Taylor approximation with dropping $\frac{TE * \Delta R_2^*(t,TE) * \Delta S_0(t,TE)}{\overline{S_0(TE)}}$
+
+$S_{spc} \approx \frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}-TE * \Delta R_2^*(t,TE)$
+
+By definition, the above should show a linear relationship with p at all echo times,
+but the previous two will be non-linear, & a Q is how non-linear.
+
