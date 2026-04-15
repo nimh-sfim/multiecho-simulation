@@ -6,6 +6,67 @@ import numpy as np
 import numpy.typing as npt
 
 
+def tile_variables(vars_to_tile: List[Union[float, npt.NDArray]], target_shape: Union[Tuple[int], None] = None) -> Tuple[npt.NDArray]:
+    """Tile variables to match a target shape.
+
+    Each variable must be a single value, have matching initial dimensions, or dimensions of size 1.
+
+
+    Parameters
+    ----------
+    vars_to_tile : List[float] or List[npt.NDArray]
+        A list of variables to tile. Each variable can be a single value or an array.
+    target_shape : Tuple[int] None
+        The shape to tile the variables to.
+        If None, then the target shape will be determined by the variable with the maximum number of non-single dimensions.
+
+    Returns
+    -------
+    vars_to_tile : List[npt.NDArray]
+        A list of tiled variables. Each variable will have the same shape as target_shape.
+    """
+
+    var_shapes = []
+    if target_shape is None:
+        tmp_target_shape = np.array([])
+    for varidx, var in enumerate(vars_to_tile):
+        if isinstance(var, (int, float, List)):
+            vars_to_tile[varidx] = np.array([var])
+        var_shapes.append(vars_to_tile[varidx].shape)
+        if len(var_shapes[varidx])==2 and var_shapes[varidx][0] == 1:
+            # if the variable is a 2D array with the first dimension of size 1, then squeeze
+            vars_to_tile[varidx] = np.squeeze(vars_to_tile[varidx])
+            var_shapes[varidx] = vars_to_tile[varidx].shape
+        if target_shape is None:
+            non_single_dims = [dim for dim in var_shapes[varidx] if dim > 1]
+            if len(non_single_dims) >= len(tmp_target_shape):
+                tmp_target_shape = tuple(non_single_dims)
+    if target_shape is None:
+        target_shape = tmp_target_shape
+
+
+    print(f"Before {var_shapes=}")
+
+    dims_good = True
+    for varidx, var in enumerate(vars_to_tile):
+        for dim_idx in range(len(target_shape)):
+            if len(var_shapes[varidx]) > dim_idx and var_shapes[varidx][dim_idx] != 1 and var_shapes[varidx][dim_idx] != target_shape[dim_idx]:
+                dims_good = False
+            elif len(var_shapes[varidx]) <= dim_idx or var_shapes[varidx][0] == 1:
+                vars_to_tile[varidx] = np.tile(vars_to_tile[varidx], ((target_shape[dim_idx],) + tuple(np.ones(dim_idx, dtype=int)))).transpose(
+                    tuple(range(1, dim_idx + 1)) + (0,)
+                )
+                var_shapes[varidx] = vars_to_tile[varidx].shape
+
+
+    if not dims_good:
+        raise ValueError(
+            f"Dimensions not compatiable. {target_shape=}, {var_shapes=}"
+        )
+    print(f"After {var_shapes=}")
+
+    return vars_to_tile
+
 def monoexponential(
     tes: Union[int, float, List[int], List[float], npt.NDArray],
     s0: Union[float, List[float], npt.NDArray],
@@ -44,46 +105,183 @@ def monoexponential(
     if t2star_input:
         r2star = 1 / r2star
 
-    if isinstance(tes, (int, float, list)):
-        tes = np.array(tes)
-    if np.prod(tes.shape) == 2 and tes.shape[0] == 1:
-        # if tes is a 1D array with the first dimension of size 1, then squeeze
-        tes = np.squeeze(tes)
-    if isinstance(s0, (int, float, list)):
-        s0 = np.array(s0)
-    if isinstance(r2star, (int, float, list)):
-        r2star = np.array(r2star)
 
-    if (s0.shape != r2star.shape) and (np.prod(s0.shape) > 1) and (np.prod(r2star.shape) > 1):
-        # if either is only a single value then no need to raise this error
-        raise ValueError(
-            f"s0 and r2star must be the same shape. s0 shape: {s0.shape} r2star shape: {r2star.shape}"
-        )
-    if np.prod(tes.shape) > 1 and (np.prod(s0.shape) > 1 or np.prod(r2star.shape) > 1):
-        if len(tes.shape) == 1:
-            # if tes is a 1D array, then tile tes, s0, and r2star have the same dimensions with tes being the final dimension
-            if np.prod(s0.shape) > 1:
-                # only need ot tile s0 if s0 is more than 1 value
-                param_shape = s0.shape
-                param_tile = (len(tes),) + tuple(np.ones(len(param_shape), dtype=int))
-                s0 = np.tile(s0, param_tile).transpose(
-                    tuple(range(1, len(param_shape) + 1)) + (0,)
-                )
-            if np.prod(r2star.shape) > 1:
-                param_shape = r2star.shape
-                param_tile = (len(tes),) + tuple(np.ones(len(param_shape), dtype=int))
-                r2star = np.tile(r2star, param_tile).transpose(
-                    tuple(range(1, len(r2star.shape) + 1)) + (0,)
-                )
-            tes = np.tile(tes, param_shape + (1,))
-        else:
-            raise ValueError(
-                f"If tes has more than 1 dimension, then s0 and r2star should be single values. tes shape: {tes.shape} s0 shape: {s0.shape} r2star shape: {r2star.shape}"
-            )
+    tes, s0, r2star = tile_variables([tes, s0, r2star])
+
+    # if isinstance(tes, (int, float, list)):
+    #     tes = np.array(tes)
+    # if np.prod(tes.shape) == 2 and tes.shape[0] == 1:
+    #     # if tes is a 1D array with the first dimension of size 1, then squeeze
+    #     tes = np.squeeze(tes)
+    # if isinstance(s0, (int, float, list)):
+    #     s0 = np.array(s0)
+    # if isinstance(r2star, (int, float, list)):
+    #     r2star = np.array(r2star)
+
+    # if (s0.shape != r2star.shape) and (np.prod(s0.shape) > 1) and (np.prod(r2star.shape) > 1):
+    #     # if either is only a single value then no need to raise this error
+    #     raise ValueError(
+    #         f"s0 and r2star must be the same shape. s0 shape: {s0.shape} r2star shape: {r2star.shape}"
+    #     )
+    # if np.prod(tes.shape) > 1 and (np.prod(s0.shape) > 1 or np.prod(r2star.shape) > 1):
+    #     if len(tes.shape) == 1:
+    #         # if tes is a 1D array, then tile tes, s0, and r2star have the same dimensions with tes being the final dimension
+    #         if np.prod(s0.shape) > 1:
+    #             # only need ot tile s0 if s0 is more than 1 value
+    #             param_shape = s0.shape
+    #             param_tile = (len(tes),) + tuple(np.ones(len(param_shape), dtype=int))
+    #             s0 = np.tile(s0, param_tile).transpose(
+    #                 tuple(range(1, len(param_shape) + 1)) + (0,)
+    #             )
+    #         if np.prod(r2star.shape) > 1:
+    #             param_shape = r2star.shape
+    #             param_tile = (len(tes),) + tuple(np.ones(len(param_shape), dtype=int))
+    #             r2star = np.tile(r2star, param_tile).transpose(
+    #                 tuple(range(1, len(r2star.shape) + 1)) + (0,)
+    #             )
+    #         tes = np.tile(tes, param_shape + (1,))
+    #     else:
+    #         raise ValueError(
+    #             f"If tes has more than 1 dimension, then s0 and r2star should be single values. tes shape: {tes.shape} s0 shape: {s0.shape} r2star shape: {r2star.shape}"
+    #         )
     return s0 * np.exp(-tes * r2star)
 
 
+def first_order_taylor_approx(
+    tes: Union[int, float, List[int], List[float], npt.NDArray],
+    delta_s0: Union[float, List[float], npt.NDArray],
+    mean_s0: Union[float, List[float], npt.NDArray],
+    delta_r2star: Union[float, List[float], npt.NDArray],
+    mean_r2star: Union[float, List[float], npt.NDArray],
+    t2star_input: bool = False,
+) -> npt.NDArray:
+    if t2star_input:
+        delta_r2star = 1 / delta_r2star
+        mean_r2star = 1 / mean_r2star
+
+    tes, delta_s0, mean_s0, delta_r2star, mean_r2star = tile_variables([tes, delta_s0, mean_s0, delta_r2star, mean_r2star])
+
+    s_percent_change = delta_s0/mean_s0 - tes*delta_r2star - tes*delta_r2star*delta_s0/mean_s0
+
+    s_mean = monoexponential(tes=tes, s0=mean_s0, r2star=mean_r2star)
+
+    return s_mean * (1 + s_percent_change)
+
+
+def linear_approx(
+    tes: Union[int, float, List[int], List[float], npt.NDArray],
+    delta_s0: Union[float, List[float], npt.NDArray],
+    mean_s0: Union[float, List[float], npt.NDArray],
+    delta_r2star: Union[float, List[float], npt.NDArray],
+    mean_r2star: Union[float, List[float], npt.NDArray],
+    t2star_input: bool = False,
+) -> npt.NDArray:
+    if t2star_input:
+        delta_r2star = 1 / delta_r2star
+        mean_r2star = 1 / mean_r2star
+
+    tes, delta_s0, mean_s0, delta_r2star, mean_r2star = tile_variables([tes, delta_s0, mean_s0, delta_r2star, mean_r2star])
+
+    s_percent_change = delta_s0/mean_s0 - tes*delta_r2star
+
+    s_mean = monoexponential(tes=tes, s0=mean_s0, r2star=mean_r2star)
+
+    return s_mean * (1 + s_percent_change)
+
+
+def all_decay_models(
+    tes: Union[int, float, List[int], List[float], npt.NDArray],
+    delta_s0: Union[float, List[float], npt.NDArray],
+    mean_s0: Union[float, List[float], npt.NDArray],
+    delta_r2star: Union[float, List[float], npt.NDArray],
+    mean_r2star: Union[float, List[float], npt.NDArray],
+    t2star_input: bool = False,
+) -> Dict[str, npt.NDArray]:
+    return {
+        "monoexponential": monoexponential(tes=tes, s0=mean_s0 + delta_s0, r2star=mean_r2star + delta_r2star, t2star_input=t2star_input),
+        "taylor1_approx": first_order_taylor_approx(tes=tes, delta_s0=delta_s0, mean_s0=mean_s0, delta_r2star=delta_r2star, mean_r2star=mean_r2star, t2star_input=t2star_input),
+        "linear_approx": linear_approx(tes=tes, delta_s0=delta_s0, mean_s0=mean_s0, delta_r2star=delta_r2star, mean_r2star=mean_r2star, t2star_input=t2star_input)
+    }
+
 def calc_delta_r2s_s0_given_s_pchange_proportion(
+    inputted_s: Union[float, npt.NDArray],
+    s0_mean: Union[float, npt.NDArray],
+    r2s_mean: Union[float, npt.NDArray],
+    te_baseline: float,
+    proportion_s0_r2s: float,
+    prop_to_scale: str = "signal",
+) -> Union[Tuple[float, float], Tuple[npt.NDArray, npt.NDArray]]:
+    """Finds relationship between delta R2* and S0 for a given signal proportion of the two.
+
+    Parameters
+    ----------
+    inputted_s : :obj:`float` :obj:`npt.NDArray`
+        A single value, a 1D array, or a 2D array of values
+        The percent change of the overall signal above the baseline value
+        S_spc = (S-mean(S))/mean(S)
+        (1==100% change)
+    s0_mean : :obj:`float` :obj:`npt.NDArray`
+        mean s0 signal parameter across time
+        If this is a single value, it will be applied to all values in inputted_s.
+        If this is 1D array, the length should match the 0th dimension of inputted_s.
+        If this is a 2D array, the shape should match the shape of inputted_s.
+    r2s_mean : :obj:`float` :obj:`npt.NDArray`
+        mean R2* parameter across time
+        If this is a single value, it will be applied to all values in inputted_s.
+        If this is 1D array, the length should match the 0th dimension of inputted_s.
+        If this is a 2D array, the shape should match the shape of inputted_s.
+    te_baseline : :obj:`float`
+        Echo time
+        The delta S0 and R2* values with the prespecified proportionwill be calculated for this echo time (TE).
+        At other echo times, the proportional relationship between delta S0 and R2* may be different.
+    proportion_s0_r2s : :obj:`float` :obj:`npt.NDArray`
+        The proportion of delta S0 / delta R2* used to generate inputted_s.
+        1 is  pure delta S0 changes. 0 is pure delta R2* changes.
+        If this is a single value, it will be applied to all values in inputted_s.
+        If this is 1D array, the length should match the 0th dimension of inputted_s.
+        If this is a 2D array, the shape should match the shape of inputted_s.
+    prop_to_scale : str
+        If "signal" then delta_s0 and delta_r2s are scaled so proportion_s0_r2s represents
+        the proportion of delta s0 and delta r2s contribution to the overall signal change (inputted_s).
+        If "variance" then delta_s0 and delta_r2s are scaled so that the variance of the signal change from delta s0 and delta r2s matches the proportion_s0_r2s.
+        Default is "signal" but that might change.
+    Returns
+    -------
+    delta_s0: obj:`float` :obj:`npt.NDArray`
+        The value(s) for delta S0 for all values in inputted_s given baseline parameters
+        Will be the same size as inputted_s
+    delta_r2s: obj:`float` :obj:`npt.NDArray`
+        The value(s) for delta R2* for all values in inputted_s given baseline parameters
+        Will be the same size as inputted_s
+
+    Math
+    ----
+    Full math explanation is currently in the README.md for this repository.
+    The math is based on a first order Taylor expansion of the monoexponential function.
+    There is an additional approximation in that an interaction term between delta s0 and delta r2s is removed.
+    The removal makes the relationship linear.
+    The assumption is that this interaction term is small
+    delta_s0 is proportion_s0_r2s * inputted_s * s0_mean
+    delta_r2s is -(1-proportion_s0_r2s) * inputted_s / te_baseline
+    """
+    if isinstance(inputted_s, (int, float)):
+        # if inputted_s is a single value, convert to array for consistent processing
+        inputted_s = np.array([inputted_s])
+
+    s_dims = inputted_s.shape
+    s0_mean, r2s_mean, proportion_s0_r2s = tile_variables([s0_mean, r2s_mean, proportion_s0_r2s], target_shape=s_dims)
+
+    if prop_to_scale.lower() == "signal":
+        delta_s0 = proportion_s0_r2s * inputted_s * s0_mean
+        delta_r2s = -(1-proportion_s0_r2s) * inputted_s / te_baseline
+    elif prop_to_scale.lower() == "variance":
+        raise NotImplementedError("Variance scaling not implemented yet.")
+        delta_s0 = np.sqrt(s0_mean)
+        delta_r2s = np.sqrt((1-proportion_s0_r2s) * inputted_s**2 / te_baseline**2)
+    return delta_s0, delta_r2s
+
+
+def calc_delta_r2s_s0_given_s_pchange_proportion_old(
     te: float,
     s0_baseline: float,
     r2s_baseline: float,

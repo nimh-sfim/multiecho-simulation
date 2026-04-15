@@ -85,31 +85,17 @@ $\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}} = S_{spc}(t,TE) = signal\ per
 For scaling the proportion of each:
 Let p be the proportion of signal driven by $\Delta S_0(t,TE)$ changes
 
-$S_{spc}(t,TE) \approx p*\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}-(1-p)*TE * \Delta R_2^*(t,TE)$
+$p*S_{spc}(t,TE) \approx \frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}$
 
-(Note the approximation above means that the approximation error will be smallest for p=0 or 1 and largest somewhere where there is a mix)
+$(1-p)*S_{spc}(t,TE) \approx -TE * \Delta R_2^*(t,TE)$
 
-There are an infinite number of solutions to the above equation,
-but we want the one where the $\Delta S_0(t,TE)$ and $\Delta R_2^*(t,TE)$
-terms are both $\in[0, S_{spc}(t,TE)]$.
-If $S_{spc}(t,TE)\lt0$ then it's still between 0 and that value.
-With that constraint, the above has a fairly simple solution
+That is the $\Delta S_0(t,TE)$ and the $\Delta R_2^*(t,TE)$ parts of the equation should each model a specified fraction of the total $S_{spc}(t,TE)$
 
-$$
-\Delta S_0(t,TE) \approx
-\begin{cases}
-0 & \text{if p=0} \\
-\frac{S_{spc}(t,TE) * \overline{S_0(TE)}}{p} & \text{if $p\in(0,1]$}
-\end{cases}
-$$
+$\Delta S_0(t,TE) \approx p*S_{spc}(t,TE)*\overline{S_0(TE)}$
 
-$$
-\Delta R_2^*(t,TE) \approx
-\begin{cases}
-0 & \text{if p=1} \\
--\frac{S_{spc}(t,TE)}{(1-p)*TE} & \text{if $p\in[0,1)$}
-\end{cases}
-$$
+$\Delta R_2^*(t,TE) \approx -\frac{(1-p)*S_{spc}(t,TE)}{TE}$
+
+Note: The approximation above means that the approximation error will be smallest for p=0 or 1 and largest somewhere where there is a mix
 
 For any given $S(t,TE)$, $\overline{S_0(TE)}$, $\overline{R_2^*(TE)}$, $TE$ & $p$ we can thus approximate $\Delta S_0(t,TE)$ and $\Delta R_2^*(t,TE)$.
 There are several levels of tests to see how far this approximation diverges from truth.
@@ -129,4 +115,32 @@ $S_{spc} \approx \frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}-TE * \Delta R_2^*(t
 
 By definition, the above should show a linear relationship with p at all echo times,
 but the previous two will be non-linear, & a Q is how non-linear.
+
+Alternative: If we want proportional variance, then we'd need to solve the above for variance.
+
+$p*var(S_{spc}(t,TE)) \approx var(\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}})$
+
+$p*S_{spc}(t,TE)^2 \approx (\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}-1)^2$
+
+$p*S_{spc}(t,TE)^2 \approx (\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}})^2 -2\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}} +1$
+
+$p*S_{spc}(t,TE)^2*\overline{S_0(TE)}^2 \approx \Delta S_0(t,TE)^2 -2*\Delta S_0(t,TE)*\overline{S_0(TE)} + \overline{S_0(TE)}^2$
+
+$\Delta S_0(t,TE)^2 -2*\overline{S_0(TE)}*\Delta S_0(t,TE) +(\overline{S_0(TE)}^2 - p*S_{spc}(t,TE)^2*\overline{S_0(TE)}^2) \approx 0$
+
+Solving for $\Delta S_0(t,TE)^2$ via the quadratic formula:
+
+$\Delta S_0(t,TE)^2 \approx \frac{2*\overline{S_0(TE)}\pm\sqrt{4*\overline{S_0(TE)}^2-4*(\overline{S_0(TE)}^2 - p*S_{spc}(t,TE)^2*\overline{S_0(TE)}^2)}}{2}$
+
+$\Delta S_0(t,TE)^2 \approx \overline{S_0(TE)}\pm\sqrt{4*\overline{S_0(TE)}^2-4*\overline{S_0(TE)}^2 + 4*p*S_{spc}(t,TE)^2*\overline{S_0(TE)}^2}$
+
+$\bold{\Delta S_0(t,TE)^2 \approx \overline{S_0(TE)}\pm2*\overline{S_0(TE)}*S_{spc}(t,TE)*\sqrt{p}}$
+
+The above is wrong because, when $p=0$, $\Delta S_0(t,TE)$ should also be 0
+
+$(1-p)*var(S_{spc}(t,TE)) \approx var(-TE * \Delta R_2^*(t,TE))$
+
+$(1-p)*S_{spc}(t,TE)^2 \approx TE^2 * \Delta R_2^*(t,TE)^2$
+
+$\bold{\Delta R_2^*(t,TE) \approx \sqrt{\frac{(1-p)*S_{spc}(t,TE)^2}{TE^2}}}$
 
