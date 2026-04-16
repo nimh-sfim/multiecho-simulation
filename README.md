@@ -120,27 +120,16 @@ Alternative: If we want proportional variance, then we'd need to solve the above
 
 $p*var(S_{spc}(t,TE)) \approx var(\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}})$
 
-$p*S_{spc}(t,TE)^2 \approx (\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}-1)^2$
+$p*S_{spc}(t,TE)^2 \approx (\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}})^2$
 
-$p*S_{spc}(t,TE)^2 \approx (\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}})^2 -2\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}} +1$
+$\Delta S_0(t,TE)^2\approx p*S_{spc}(t,TE)^2 \overline{S_0(TE)}^2$
 
-$p*S_{spc}(t,TE)^2*\overline{S_0(TE)}^2 \approx \Delta S_0(t,TE)^2 -2*\Delta S_0(t,TE)*\overline{S_0(TE)} + \overline{S_0(TE)}^2$
-
-$\Delta S_0(t,TE)^2 -2*\overline{S_0(TE)}*\Delta S_0(t,TE) +(\overline{S_0(TE)}^2 - p*S_{spc}(t,TE)^2*\overline{S_0(TE)}^2) \approx 0$
-
-Solving for $\Delta S_0(t,TE)^2$ via the quadratic formula:
-
-$\Delta S_0(t,TE)^2 \approx \frac{2*\overline{S_0(TE)}\pm\sqrt{4*\overline{S_0(TE)}^2-4*(\overline{S_0(TE)}^2 - p*S_{spc}(t,TE)^2*\overline{S_0(TE)}^2)}}{2}$
-
-$\Delta S_0(t,TE)^2 \approx \overline{S_0(TE)}\pm\sqrt{4*\overline{S_0(TE)}^2-4*\overline{S_0(TE)}^2 + 4*p*S_{spc}(t,TE)^2*\overline{S_0(TE)}^2}$
-
-$\bold{\Delta S_0(t,TE)^2 \approx \overline{S_0(TE)}\pm2*\overline{S_0(TE)}*S_{spc}(t,TE)*\sqrt{p}}$
-
-The above is wrong because, when $p=0$, $\Delta S_0(t,TE)$ should also be 0
+$\bold{\Delta S_0(t,TE) \approx \sqrt{p}*S_{spc}(t,TE) \overline{S_0(TE)}}$
 
 $(1-p)*var(S_{spc}(t,TE)) \approx var(-TE * \Delta R_2^*(t,TE))$
 
 $(1-p)*S_{spc}(t,TE)^2 \approx TE^2 * \Delta R_2^*(t,TE)^2$
 
-$\bold{\Delta R_2^*(t,TE) \approx \sqrt{\frac{(1-p)*S_{spc}(t,TE)^2}{TE^2}}}$
+$\Delta R_2^*(t,TE) \approx \sqrt{\frac{(1-p)*S_{spc}(t,TE)^2}{TE^2}}$
 
+$\bold{\Delta R_2^*(t,TE) \approx \frac{\sqrt{1-p}*S_{spc}(t,TE)}{TE}}$
