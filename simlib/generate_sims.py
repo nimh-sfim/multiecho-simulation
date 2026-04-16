@@ -281,9 +281,8 @@ def calc_delta_r2s_s0_given_s_pchange_proportion(
         delta_s0 = proportion_s0_r2s * inputted_s * s0_mean
         delta_r2s = -(1 - proportion_s0_r2s) * inputted_s / te_baseline
     elif prop_to_scale.lower() == "variance":
-        raise NotImplementedError("Variance scaling not working correctly.")
         delta_s0 = np.sqrt(proportion_s0_r2s) * inputted_s * s0_mean
-        delta_r2s = np.sqrt(1 - proportion_s0_r2s) * inputted_s / te_baseline
+        delta_r2s = -np.sqrt(1 - proportion_s0_r2s) * inputted_s / te_baseline
     return delta_s0, delta_r2s
 
 
