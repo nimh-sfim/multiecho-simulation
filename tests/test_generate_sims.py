@@ -57,23 +57,24 @@ def test_monoexponential():
     # with pytest.raises(ValueError, match="s0 and r2star must be the same shape."):
     #     gen_sims.monoexponential(tes, s0, r2star)
 
+
 def test_calc_delta_r2s_s0_given_s_pchange_proportion():
 
     inputted_s = 0.1
     delta_s0, delta_r2s = gen_sims.calc_delta_r2s_s0_given_s_pchange_proportion(
         inputted_s=inputted_s,
         s0_mean=100,
-        r2s_mean=1/28,
+        r2s_mean=1 / 28,
         proportion_s0_r2s=0.5,
         te_baseline=28,
     )
     assert len(delta_s0) == 1
     assert len(delta_r2s) == 1
 
-    inputted_s = np.random.randn(3,4,5)/2
+    inputted_s = np.random.randn(3, 4, 5) / 2
     s0_mean = np.array([100, 200, 300])
-    r2s_mean = np.array([1/28])
-    proportion_s0_r2s = np.random.rand(3,4)
+    r2s_mean = np.array([1 / 28])
+    proportion_s0_r2s = np.random.rand(3, 4)
     te_baseline = 28
     delta_s0, delta_r2s = gen_sims.calc_delta_r2s_s0_given_s_pchange_proportion(
         inputted_s=inputted_s,
@@ -84,4 +85,3 @@ def test_calc_delta_r2s_s0_given_s_pchange_proportion():
     )
     assert delta_s0.shape == inputted_s.shape
     assert delta_r2s.shape == inputted_s.shape
-

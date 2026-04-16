@@ -1,4 +1,4 @@
-""" Generate time series with different characteristics to use as input to generate_sims at different echoes"""
+"""Generate time series with different characteristics to use as input to generate_sims at different echoes"""
 
 from typing import List, Union
 
@@ -7,7 +7,9 @@ import numpy.typing as npt
 from scipy import signal
 
 
-def gen_randfreq_timeseries(n_reps: int, n_timepoints: int, n_freq: int,seed: Union[int, None] = None) -> npt.NDArray:
+def gen_randfreq_timeseries(
+    n_reps: int, n_timepoints: int, n_freq: int, seed: Union[int, None] = None
+) -> npt.NDArray:
     """
     time series that is a combination of sine waves with uniform random freq & phase and amplitude
 
@@ -45,9 +47,7 @@ def gen_randfreq_timeseries(n_reps: int, n_timepoints: int, n_freq: int,seed: Un
         random_freq = np.tile(
             min_freq + np.random.rand(n_reps) / max_freq, (n_timepoints, 1)
         ).T
-        random_phase = np.tile(
-            2 * np.pi * np.random.rand(n_reps), (n_timepoints, 1)
-        ).T
+        random_phase = np.tile(2 * np.pi * np.random.rand(n_reps), (n_timepoints, 1)).T
         freq_random = freq_random + random_amp * np.sin(
             random_freq * time_scale + random_phase
         )
@@ -56,7 +56,9 @@ def gen_randfreq_timeseries(n_reps: int, n_timepoints: int, n_freq: int,seed: Un
     return (freq_random - tmp_mean) / tmp_std
 
 
-def gen_randn_timeseries(n_reps: int, n_vals: int, seed: Union[int, None] = None) -> npt.NDArray:
+def gen_randn_timeseries(
+    n_reps: int, n_vals: int, seed: Union[int, None] = None
+) -> npt.NDArray:
     """
     time series that are Gaussian random noise
 
@@ -79,7 +81,7 @@ def gen_bandpass_randn_timeseries(
     n_timepoints: int,
     passband: List[float] = [1 / 100, 1 / 20],
     fs: float = 0.5,
-    seed: Union[int, None] = None
+    seed: Union[int, None] = None,
 ) -> npt.NDArray:
     """
     time series that are Gaussian random noise and then bandpass filtered
@@ -98,4 +100,6 @@ def gen_bandpass_randn_timeseries(
     """
 
     sos = signal.butter(10, passband, "bandpass", fs=fs, output="sos")
-    return signal.sosfilt(sos, gen_randn_timeseries(n_reps, n_timepoints, seed=seed), axis=1)
+    return signal.sosfilt(
+        sos, gen_randn_timeseries(n_reps, n_timepoints, seed=seed), axis=1
+    )
