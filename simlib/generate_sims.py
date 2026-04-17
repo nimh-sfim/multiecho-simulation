@@ -53,7 +53,7 @@ def tile_variables(
     if target_shape is None:
         target_shape = tmp_target_shape
 
-    print(f"Before {var_shapes=}")
+    # print(f"Before {var_shapes=}")
 
     dims_good = True
     for varidx, var in enumerate(vars_to_tile):
@@ -74,7 +74,7 @@ def tile_variables(
 
     if not dims_good:
         raise ValueError(f"Dimensions not compatiable. {target_shape=}, {var_shapes=}")
-    print(f"After {var_shapes=}")
+    # print(f"After {var_shapes=}")
 
     return vars_to_tile
 
