@@ -64,7 +64,7 @@ Common assumption. This is small enough that it can be dropped: $`\frac{TE * \De
 
 This is not a great assumption.
 If mean $`\Delta R_2^*(t,TE)`$ is 30 and the $\Delta {T_2^*}=-2`$ then
-$`TE * \Delta R_2^*(t,TE) = TE * (1/30-1/28) = - TE * 0.002`$.
+$`TE * \Delta R_2^*(t,TE) = TE * (1/30-1/28) = - TE * 0.002`$ .
 For a third echo echo time of $`TE=50ms`$ that is -0.12.
 That is a scaling factor of 1.12 is added to the the reduced $`\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}`$ term.
 
@@ -124,7 +124,7 @@ $`p*S_{spc}(t,TE)^2 \approx (\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}})^2`$
 
 $`\Delta S_0(t,TE)^2\approx p*S_{spc}(t,TE)^2 \overline{S_0(TE)}^2`$
 
-$`\bold{\Delta S_0(t,TE) \approx \sqrt{p}*S_{spc}(t,TE) \overline{S_0(TE)}}`$
+$`\Delta S_0(t,TE) \approx \sqrt{p}*S_{spc}(t,TE) \overline{S_0(TE)}`$
 
 $`(1-p)*var(S_{spc}(t,TE)) \approx var(-TE * \Delta R_2^*(t,TE))`$
 
@@ -132,4 +132,4 @@ $`(1-p)*S_{spc}(t,TE)^2 \approx TE^2 * \Delta R_2^*(t,TE)^2`$
 
 $`\Delta R_2^*(t,TE) \approx \sqrt{\frac{(1-p)*S_{spc}(t,TE)^2}{TE^2}}`$
 
-$`\bold{\Delta R_2^*(t,TE) \approx \frac{\sqrt{1-p}*S_{spc}(t,TE)}{TE}}`$
+$`\Delta R_2^*(t,TE) \approx \frac{\sqrt{1-p}*S_{spc}(t,TE)}{TE}`$
