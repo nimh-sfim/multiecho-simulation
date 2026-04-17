@@ -2,14 +2,14 @@
 
 The core approach of this simulation is:  
 The user inputs time series, baseline parameters including echo time,
-and the proportion of $\Delta R_2^*$ and $\Delta S_0$.
+and the proportion of $`\Delta R_2^*`$ and $`\Delta S_0`$.
 The code can then generate time series for echo times given the baseline parameters.
 There can be many sources of the intial time series (pure simulation or real data),
 and the resulting multi-echo data will be based on a ground-truth calculation
-given the inputted proportions of $\Delta R_2^*$ and $\Delta S_0$.
-That is, if signal fluctuations are purely $\Delta S_0$,
+given the inputted proportions of $`\Delta R_2^*`$ and $`\Delta S_0`$.
+That is, if signal fluctuations are purely $`\Delta S_0`$,
 then the % change from mean time series will be identical at all echo times.
-If signal fluctuations are purely $\Delta R_2^*$,
+If signal fluctuations are purely $`\Delta R_2^*`$,
 then the amplitude of fluctuations will scale with echo time.
 Proportions in-between will show a mix.
 
