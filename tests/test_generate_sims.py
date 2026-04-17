@@ -1,4 +1,5 @@
 import os.path as op
+from unittest import result
 import pytest
 import sys
 import numpy as np
@@ -8,6 +9,57 @@ sys.path.append(op.join(op.dirname(op.abspath(__file__)), "..", "simlib"))
 
 import generate_sims as gen_sims
 
+def test_tile_variables():
+    # test with int + array and no target shape
+    vars_to_tile = [4, np.array([1,7,8])]
+    expected_result = [np.array([4,4,4]), np.array([1,7,8])]
+    result = gen_sims.tile_variables(vars_to_tile)
+    assert np.array_equal(result, expected_result)
+
+    # test with a float + array
+    vars_to_tile = [4.5, np.array([1,7,8])]
+    expected_result = [np.array([4.5, 4.5, 4.5]), np.array([1,7,8])]
+    result = gen_sims.tile_variables(vars_to_tile)
+    assert np.array_equal(result, expected_result)
+
+    # test with int + array and target shape
+    vars_to_tile = [
+        2,
+        np.array([1,2,3]),
+        np.array([[2,6,3],
+                  [42,5,16],
+                  [7,7,2]]),
+        4
+    ]
+    target_shape = (3,3)
+    result = gen_sims.tile_variables(vars_to_tile, target_shape)
+    assert result[0].shape == target_shape
+
+    # test 3D arrays
+    arr1 = np.arange(24).reshape((2, 3, 4))
+    arr2 = np.ones((2, 3, 4))
+    vars_to_tile = [arr1, arr2]
+    target_shape = (2,3,4)
+    result = gen_sims.tile_variables(vars_to_tile, target_shape)
+    assert result[0].shape == target_shape
+
+    # test without target shape
+    arr1 = np.arange(24).reshape((2, 3, 4))
+    arr2 = np.ones((2, 3, 4))
+    vars_to_tile = [arr1, arr2]
+    largest = max(vars_to_tile, key=lambda x: np.asarray(x).size)
+    expected_shape = largest.shape
+    result = gen_sims.tile_variables(vars_to_tile)
+    assert result[0].shape == expected_shape
+
+    # mix of arrays and int
+    arr1 = np.arange(24).reshape((2, 3, 4))
+    arr2 = np.zeros((2, 3, 4))
+    vars_to_tile = [arr1,4,5.5]
+    largest = max(vars_to_tile, key=lambda x: np.asarray(x).size)
+    expected_shape = largest.shape
+    result = gen_sims.tile_variables(vars_to_tile)
+    assert result[0].shape == expected_shape
 
 def test_monoexponential():
     tes = [10, 20]
