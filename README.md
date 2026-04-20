@@ -15,13 +15,24 @@ Proportions in-between will show a mix.
 
 This also includes some functions to help generate the intial time series.
 
-
 ## Underlying math for the simulation
+
+Standard equation for MRI signal estimation:
 
 $`S(v,t,TE) = (\overline{S_0(v,TE)} + \Delta S_0(v,t,TE)) * e^{-TE * (\overline{R_2^*(v,TE)} + \Delta R_2^*(v,t,TE))}`$
 
-For everything below, we will get different values for each voxel (v),
-but removing the v to make the equation slightly cleaner
+$`S(v,t,TE)`$ is the measured signal at each voxel (v), timepoint(t), and echo time (TE).
+$`S_0`$ models spin-lattice relaxation (non-BOLD)
+and $`\Delta R_2^*`$ models spin-spin relaxation (including BOLD).
+For the above eq, these parameters are split into a mean term,
+which should represent a baseline measure of the tissue properties,
+and a $`\Delta`$ change term, which represents changes from the mean.
+The $`\Delta`$ term inherantly has a mean of 0 and it's the proportional
+effects of changes to $`\Delta S_0(v,t,TE)`$ and $`\Delta R_2^*(v,t,TE)`$
+and this simulation is designed to parameterize.
+
+Note: For everything below, we remove v to make the equations slightly cleaner,
+but the simulations functions can handle multiple dimensions.
 
 $`S(t,TE) = (\overline{S_0(TE)} + \Delta S_0(t,TE)) * e^{-TE * (\overline{R_2^*(TE)} + \Delta R_2^*(t,TE))}`$
 
@@ -49,38 +60,27 @@ $`S(t,TE) = \overline{S(TE)}*(1+\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}) * e
 
 Percent change from the mean
 
-$`\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}} = (1+\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}) * e^{-TE * \Delta R_2^*(t,TE)} - 1`$
+$`S_{spc}(t,TE) = \frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}} = (1+\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}) * e^{-TE * \Delta R_2^*(t,TE)} - 1`$
 
-$`\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}} = (1+\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}) * e^{-TE * \Delta R_2^*(t,TE)} -1`$
+$`S_{spc}(t,TE) = (1+\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}) * e^{-TE * \Delta R_2^*(t,TE)} -1`$
 
 First order Taylor Explansion:
 $`e^{-TE * \Delta R_2^*(t,TE)} \approx 1 - TE * \Delta R_2^*(t,TE)`$
 
-$`\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}}\approx (1+\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}) * (1 - TE * \Delta R_2^*(t,TE)) - 1`$
+$`S_{spc}(t,TE) \approx (1+\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}) * (1 - TE * \Delta R_2^*(t,TE)) - 1`$
 
-$`\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}} \approx \frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}-TE * \Delta R_2^*(t,TE) - \frac{TE * \Delta R_2^*(t,TE) * \Delta S_0(t,TE)}{\overline{S_0(TE)}}`$
+$`S_{spc}(t,TE) \approx \frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}-TE * \Delta R_2^*(t,TE) - \frac{TE * \Delta R_2^*(t,TE) * \Delta S_0(t,TE)}{\overline{S_0(TE)}}`$
 
-Common assumption. This is small enough that it can be dropped: $`\frac{TE * \Delta R_2^*(t,TE) * \Delta S_0(t,TE)}{\overline{S_0(TE)}}`$
+Common assumption: $`\frac{TE * \Delta R_2^*(t,TE) * \Delta S_0(t,TE)}{\overline{S_0(TE)}}`$ is small enough that it can be dropped. This assumption is tested in [showing_sim_properities.ipynb](./showing_sim_properities.ipynb) and it is reasonable approximation.
+The approximation is diverges when $`\Delta R_2^*(t,TE)`$ and $`\Delta S_0(t,TE)`$ are both relatively large,
+and also as the specified TE increases. When $`S_{spc}(t,TE) = 0.1`$ (a 10% change from the mean),
+and TE=70ms, the difference in removing this iteraction term is less than 1%.
+The full Taylor Approximation is over 3.5% different from the monoexponential decay curve for a -10% signal change and
+with $`\Delta S_0(t,TE)=0`$.
+There removal of the interaction term does not increase the approxmation error beacuse, in this situation,
+the interaction term is 0.
 
-This is not a great assumption.
-If mean $`\Delta R_2^*(t,TE)`$ is 30 and the $\Delta {T_2^*}=-2`$ then
-$`TE * \Delta R_2^*(t,TE) = TE * (1/30-1/28) = - TE * 0.002`$ .
-For a third echo echo time of $`TE=50ms`$ that is -0.12.
-That is a scaling factor of 1.12 is added to the the reduced $`\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}`$ term.
-
-$`\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}} \approx 1.12*\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}-TE * \Delta R_2^*(t,TE)`$
-
-If $`\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}=0.1`$ (a 10% signal change) then, with the above assumption:
-$`\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}} \approx 0.1 + 0.12 = 0.22`$
-Without the above assumption,
-$`\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}} \approx 1.12*0.1 + 0.12 = 0.232`$
-That's about a 5% misapproximation of $`\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}}`$
-
-Going forward this with approximation/assumption for now and will test overall error in the simulation results later.
-
-$`\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}} \approx \frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}-TE * \Delta R_2^*(t,TE)`$
-
-$`\frac{S(t,TE)-\overline{S(TE)}}{\overline{S(TE)}} = S_{spc}(t,TE) = signal\ percent\ change\ from\ mean`$
+$`S_{spc}(t,TE) \approx \frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}-TE * \Delta R_2^*(t,TE)`$
 
 For scaling the proportion of each:
 Let p be the proportion of signal driven by $`\Delta S_0(t,TE)`$ changes
@@ -89,7 +89,8 @@ $`p*S_{spc}(t,TE) \approx \frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}`$
 
 $`(1-p)*S_{spc}(t,TE) \approx -TE * \Delta R_2^*(t,TE)`$
 
-That is the $`\Delta S_0(t,TE)`$ and the $`\Delta R_2^*(t,TE)`$ parts of the equation should each model a specified fraction of the total $`S_{spc}(t,TE)`$
+That is the $`\Delta S_0(t,TE)`$ and the $`\Delta R_2^*(t,TE)`$ parts of the equation should each model a specified fraction of the total $`S_{spc}(t,TE)`$.
+Main equations for the simulation:
 
 $`\Delta S_0(t,TE) \approx p*S_{spc}(t,TE)*\overline{S_0(TE)}`$
 
@@ -114,9 +115,10 @@ Taylor approximation with dropping $`\frac{TE * \Delta R_2^*(t,TE) * \Delta S_0(
 $`S_{spc} \approx \frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}}-TE * \Delta R_2^*(t,TE)`$
 
 By definition, the above should show a linear relationship with p at all echo times,
-but the previous two will be non-linear, & a Q is how non-linear.
+but the previous two will be non-linear.
+These are evaluated in [showing_sim_properities.ipynb](./showing_sim_properities.ipynb)
 
-Alternative: If we want proportional variance, then we'd need to solve the above for variance.
+### Alternative simulation with proportional variance
 
 $`p*var(S_{spc}(t,TE)) \approx var(\frac{\Delta S_0(t,TE)}{\overline{S_0(TE)}})`$
 

@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "multiecho-simulation"
 description = "A tool for simulating multi-echo fMRI datasets."
 readme = "README.md"
-authors = [{name = "Daniel Handwerker, Marlene Smith, Tevor Day"}]
+authors = [{name = "Daniel Handwerker, Marlene Smith, Tevor K.M. Day"}]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
