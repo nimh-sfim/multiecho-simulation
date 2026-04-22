@@ -44,21 +44,15 @@ def gen_randfreq_timeseries(
     max_freq = 5 / n_timepoints  # a cycle repeating every 5 time points
     for freq_idx in range(n_freq):
         random_amp = np.tile(np.random.rand(n_reps), (n_timepoints, 1)).T
-        random_freq = np.tile(
-            min_freq + np.random.rand(n_reps) / max_freq, (n_timepoints, 1)
-        ).T
+        random_freq = np.tile(min_freq + np.random.rand(n_reps) / max_freq, (n_timepoints, 1)).T
         random_phase = np.tile(2 * np.pi * np.random.rand(n_reps), (n_timepoints, 1)).T
-        freq_random = freq_random + random_amp * np.sin(
-            random_freq * time_scale + random_phase
-        )
+        freq_random = freq_random + random_amp * np.sin(random_freq * time_scale + random_phase)
     tmp_mean = np.tile(np.mean(freq_random, axis=1), (n_timepoints, 1)).T
     tmp_std = np.tile(np.std(freq_random, axis=1), (n_timepoints, 1)).T
     return (freq_random - tmp_mean) / tmp_std
 
 
-def gen_randn_timeseries(
-    n_reps: int, n_vals: int, seed: Union[int, None] = None
-) -> npt.NDArray:
+def gen_randn_timeseries(n_reps: int, n_vals: int, seed: Union[int, None] = None) -> npt.NDArray:
     """
     time series that are Gaussian random noise
 
@@ -100,6 +94,4 @@ def gen_bandpass_randn_timeseries(
     """
 
     sos = signal.butter(10, passband, "bandpass", fs=fs, output="sos")
-    return signal.sosfilt(
-        sos, gen_randn_timeseries(n_reps, n_timepoints, seed=seed), axis=1
-    )
+    return signal.sosfilt(sos, gen_randn_timeseries(n_reps, n_timepoints, seed=seed), axis=1)
